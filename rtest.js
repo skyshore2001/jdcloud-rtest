@@ -345,7 +345,7 @@ describe("对象型接口", function() {
 
 	function testExport(fmt, sp)
 	{
-		var ret = callSvrSync("ApiLog.query", {_pagesz: 3, _fmt: fmt, res: "id,ac,addr,tm"}, $.noop, null, {nofilter:1});
+		var ret = callSvrSync("ApiLog.query", {_pagesz: 3, _fmt: fmt, res: "id,ac 接口名,addr 地址,tm 时间"}, $.noop, null, {nofilter:1});
 		var arr = ret.split("\n");
 		expect(arr.length >= 2).toEqual(true); // 至少2行，标题和首行
 
