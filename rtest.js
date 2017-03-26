@@ -311,14 +311,15 @@ describe("对象型接口", function() {
 		generalAdd();
 
 		var pagesz = 3;
-		var ret = callSvrSync("ApiLog.query", {_pagesz: pagesz, res: "id,ac", orderby: "id DESC"});
+		var param = {_pagesz: pagesz, res: "id,ac", cond: "id<=" + id_, orderby: "id DESC"};
+		var ret = callSvrSync("ApiLog.query", param);
 		expect(ret).toJDTable(["id", "ac"]);
 		if (ret.nextkey) {
 			// nextkey是最后一条记录的id
 			expect(ret.nextkey).toEqual(ret.d[ret.d.length-1][0]);
 
 			// 取第二页
-			var ret2 = callSvrSync("ApiLog.query", {_pagesz: pagesz, _pagekey:ret.nextkey, res: "id,ac", orderby: "id DESC"});
+			var ret2 = callSvrSync("ApiLog.query", $.extend({}, param, {_pagekey:ret.nextkey}));
 			expect(ret2).toJDTable(["id", "ac"]);
 			// 下一页与前一页一定不同，因而首记录id不同。
 			expect(ret2.d[0][0]).not.toEqual(ret.d[0][0]);
@@ -334,7 +335,8 @@ describe("对象型接口", function() {
 
 		// 指定 _pagekey=0时，应返回total字段。
 		var pagesz = 3;
-		var ret = callSvrSync("ApiLog.query", {_pagesz: pagesz, _pagekey:0, res: "id,ac", orderby: "tm DESC"});
+		var param = {_pagesz: pagesz, res: "id,ac", cond: "id<=" + id_, orderby: "tm DESC"};
+		var ret = callSvrSync("ApiLog.query", $.extend({}, param, {_pagekey:0}));
 		expect(ret).toJDTable(["id", "ac"]);
 		expect(ret).toEqual(jasmine.objectContaining({h: ["id", "ac"], d: jasmine.any(Array), total: jasmine.any(Number)})); // 应有total字段
 
@@ -342,7 +344,7 @@ describe("对象型接口", function() {
 		if (ret.nextkey) {
 			// 取第二页, 由于不是按照id排序，不能使用parital paging机制，第二页就是nextkey=2
 			expect(ret.nextkey).toEqual(2);
-			ret2 = callSvrSync("ApiLog.query", {_pagesz: pagesz, _pagekey:ret.nextkey, res: "id,ac", orderby: "tm DESC"});
+			ret2 = callSvrSync("ApiLog.query", $.extend({}, param, {_pagekey:ret.nextkey}));
 			expect(ret2).toJDTable(["id", "ac"]);
 			expect(ret2).toJDObj(["!total"]); // 不含total字段
 			// 下一页与前一页一定不同，因而首记录id不同。
@@ -363,7 +365,7 @@ describe("对象型接口", function() {
 				retN = ret2;
 			}
 			else {
-				retN = callSvrSync("ApiLog.query", {_pagesz: pagesz, _pagekey: pageCnt, res: "id,ac", orderby: "tm DESC"});
+				retN = callSvrSync("ApiLog.query", $.extend({}, param, {_pagekey: pageCnt}));
 				expect(retN).toJDTable(["id", "ac"]);
 			}
 			expect(retN.d.length).toEqual(lastPageSz);
