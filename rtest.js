@@ -306,6 +306,70 @@ describe("对象型接口", function() {
 		// 只有一条
 		expect(ret.d.length).toEqual(1);
 	});
+	it("query操作-分页", function () {
+		// 按id排序，使用的是partial paging机制，nextkey为返回的最后一个id
+		generalAdd();
+
+		var pagesz = 3;
+		var ret = callSvrSync("ApiLog.query", {_pagesz: pagesz, res: "id,ac", orderby: "id DESC"});
+		expect(ret).toJDTable(["id", "ac"]);
+		if (ret.nextkey) {
+			// nextkey是最后一条记录的id
+			expect(ret.nextkey).toEqual(ret.d[ret.d.length-1][0]);
+
+			// 取第二页
+			var ret2 = callSvrSync("ApiLog.query", {_pagesz: pagesz, _pagekey:ret.nextkey, res: "id,ac", orderby: "id DESC"});
+			expect(ret2).toJDTable(["id", "ac"]);
+			// 下一页与前一页一定不同，因而首记录id不同。
+			expect(ret2.d[0][0]).not.toEqual(ret.d[0][0]);
+		}
+		else {
+			// 不满一页，没有下一页的情况
+			expect(ret.d.length < pagesz).toEqual(true);
+		}
+	});
+	it("query操作-orderby及分页", function () {
+		// 与上面按id排序不同，这里按tm排序，无法使用partial paging机制，nextkey为传统页码。
+		generalAdd();
+
+		// 指定 _pagekey=0时，应返回total字段。
+		var pagesz = 3;
+		var ret = callSvrSync("ApiLog.query", {_pagesz: pagesz, _pagekey:0, res: "id,ac", orderby: "tm DESC"});
+		expect(ret).toJDTable(["id", "ac"]);
+		expect(ret).toEqual(jasmine.objectContaining({h: ["id", "ac"], d: jasmine.any(Array), total: jasmine.any(Number)})); // 应有total字段
+
+		var ret2;
+		if (ret.nextkey) {
+			// 取第二页, 由于不是按照id排序，不能使用parital paging机制，第二页就是nextkey=2
+			expect(ret.nextkey).toEqual(2);
+			ret2 = callSvrSync("ApiLog.query", {_pagesz: pagesz, _pagekey:ret.nextkey, res: "id,ac", orderby: "tm DESC"});
+			expect(ret2).toJDTable(["id", "ac"]);
+			expect(ret2).toJDObj(["!total"]); // 不含total字段
+			// 下一页与前一页一定不同，因而首记录id不同。
+			expect(ret2.d[0][0]).not.toEqual(ret.d[0][0]);
+		}
+
+		// 检查最后一页
+		var pageCnt = Math.ceil(ret.total / pagesz);
+		var lastPageSz = ret.total % pagesz;
+		if (lastPageSz == 0)
+			++ pageCnt;
+		if (pageCnt == 1) {
+			expect(ret.d.length).toEqual(pageCnt);
+		}
+		else {
+			var retN;
+			if (pageCnt == 2) {
+				retN = ret2;
+			}
+			else {
+				retN = callSvrSync("ApiLog.query", {_pagesz: pagesz, _pagekey: pageCnt, res: "id,ac", orderby: "tm DESC"});
+				expect(retN).toJDTable(["id", "ac"]);
+			}
+			expect(retN.d.length).toEqual(lastPageSz);
+			expect(retN).toJDObj(["!nextkey"]); // 最后一页没有nextkey字段
+		}
+	});
 	it("query操作-gres统计", function () {
 		//generalAdd();
 
