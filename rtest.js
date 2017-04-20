@@ -378,8 +378,14 @@ describe("对象型接口", function() {
 		var pagesz = 3;
 		var dt = new Date();
 		dt.setTime(dt - T_DAY*7); // 7天内按ac分组统计
-		var ret = callSvrSync("ApiLog.query", {gres:"ac", res:"count(*) cnt, sum(id) fakeSum", cond: "tm>='" + formatDate(dt) + "' and ac IS NOT NULL", orderby: "cnt desc", _pagesz: pagesz});
+		// 设置了pagekey, 要求返回total字段
+		var ret = callSvrSync("ApiLog.query", {gres:"ac", res:"count(*) cnt, sum(id) fakeSum", cond: "tm>='" + formatDate(dt) + "' and ac IS NOT NULL", orderby: "cnt desc", _pagesz: pagesz, _pagekey: 0});
 		expect(ret).toJDTable(["ac", "cnt", "fakeSum"]);
+
+		// 检查total计算是否正确, 注意：需要支持count(distinct ac)
+		var ret2 = callSvrSync("ApiLog.query", {res:"count(distinct ac) cnt", cond: "tm>='" + formatDate(dt) + "' and ac IS NOT NULL" });
+		expect(ret2).toJDTable(["cnt"]);
+		expect(ret.total).toEqual(ret2.d[0][0]);
 	});
 	it("query操作-gres统计-中文", function () {
 		var pagesz = 3;
