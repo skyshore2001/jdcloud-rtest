@@ -107,6 +107,11 @@ describe("param函数", function() {
 		ret = callSvrSync("fn", {f: "mparam", name: "id", id: 99, coll: "P"});
 		expect(ret).toJDRet(E_PARAM);
 	});
+	it("支持POST内容以json格式传递", function () {
+		var userObj = {id: 99, name: "jerry", perms: ["emp","mgr"]};
+		var ret = callSvrSync("fn", {f: "param", name: "perms"}, $.noop, {_json: userObj});
+		expect(ret).toEqual(userObj.perms);
+	});
 });
 
 describe("数据库函数", function() {
