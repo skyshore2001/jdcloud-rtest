@@ -377,6 +377,31 @@ describe("对象型接口", function() {
 			expect(retN).toJDObj(["!nextkey"]); // 最后一页没有nextkey字段
 		}
 	});
+	it("query操作-page参数强制传统分页", function () {
+		// 按id排序，默认使用的是partial paging机制，用page参数强制使用传统按页数来分页（LIMIT机制）
+		generalAdd();
+
+		var pagesz = 3;
+		var param = {pagesz: pagesz, res: "id,ac", cond: "id<=" + id_, orderby: "id DESC", page: 1};
+		var ret = callSvrSync("ApiLog.query", param);
+		expect(ret).toJDTable(["id", "ac"]);
+		expect(ret).toJDObj(["total"]); // 用page参数必返回total字段
+		if (ret.nextkey) {
+			// nextkey是页数
+			expect(ret.nextkey).toEqual(2);
+
+			// 取第二页
+			var ret2 = callSvrSync("ApiLog.query", $.extend({}, param, {page: ret.nextkey}));
+			expect(ret2).toJDTable(["id", "ac"]);
+			expect(ret2).toJDObj(["total"]); // 用page参数必返回total字段
+			// 下一页与前一页一定不同，因而首记录id不同。
+			expect(ret2.d[0][0]).not.toEqual(ret.d[0][0]);
+		}
+		else {
+			// 不满一页，没有下一页的情况
+			expect(ret.d.length < pagesz).toEqual(true);
+		}
+	});
 	it("query操作-gres统计", function () {
 		//generalAdd();
 
