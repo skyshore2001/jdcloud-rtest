@@ -76,8 +76,8 @@
 	ApiLog.query(gres, cond) -> {h, d, nextkey?}
 
 	格式化
-	ApiLog.query(_fmt=list) -> {list, nextkey?}
-	ApiLog.query(_fmt=csv) -> csv格式
+	ApiLog.query(fmt=list) -> {list, nextkey?}
+	ApiLog.query(fmt=csv) -> csv格式
 
 	jquery-easyui支持
 	分页：必返回total字段
@@ -127,5 +127,5 @@
 	UserApiLog.listByAc(ac, _pagesz?, _pagekey?) -> [{id, ...}]
 
 - 权限: AUTH_USER
-- 相当于调用 UserApiLog.query(cond="ac={ac}", _fmt=list), 支持分页。
+- 相当于调用 UserApiLog.query(cond="ac={ac}", fmt=list), 支持分页。
 

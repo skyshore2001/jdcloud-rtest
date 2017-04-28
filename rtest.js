@@ -284,7 +284,7 @@ describe("对象型接口", function() {
 		generalAdd();
 
 		var pagesz = 3;
-		var ret = callSvrSync("ApiLog.query", {_pagesz: pagesz});
+		var ret = callSvrSync("ApiLog.query", {pagesz: pagesz});
 		expect(ret).toJDTable(["id", "ac", "addr", "tm"]);
 		// 至少有一条
 		expect(ret.d.length).toBeGreaterThan(0);
@@ -301,7 +301,7 @@ describe("对象型接口", function() {
 		generalAdd();
 
 		var pagesz = 3;
-		var ret = callSvrSync("ApiLog.query", {_pagesz: pagesz, res: "id,ac", cond: "id=" + id_});
+		var ret = callSvrSync("ApiLog.query", {pagesz: pagesz, res: "id,ac", cond: "id=" + id_});
 		expect(ret).toEqual({h: ["id", "ac"], d: jasmine.any(Array)});
 		// 只有一条
 		expect(ret.d.length).toEqual(1);
@@ -311,7 +311,7 @@ describe("对象型接口", function() {
 		generalAdd();
 
 		var pagesz = 3;
-		var param = {_pagesz: pagesz, res: "id,ac", cond: "id<=" + id_, orderby: "id DESC"};
+		var param = {pagesz: pagesz, res: "id,ac", cond: "id<=" + id_, orderby: "id DESC"};
 		var ret = callSvrSync("ApiLog.query", param);
 		expect(ret).toJDTable(["id", "ac"]);
 		if (ret.nextkey) {
@@ -319,7 +319,7 @@ describe("对象型接口", function() {
 			expect(ret.nextkey).toEqual(ret.d[ret.d.length-1][0]);
 
 			// 取第二页
-			var ret2 = callSvrSync("ApiLog.query", $.extend({}, param, {_pagekey:ret.nextkey}));
+			var ret2 = callSvrSync("ApiLog.query", $.extend({}, param, {pagekey:ret.nextkey}));
 			expect(ret2).toJDTable(["id", "ac"]);
 			// 下一页与前一页一定不同，因而首记录id不同。
 			expect(ret2.d[0][0]).not.toEqual(ret.d[0][0]);
@@ -333,10 +333,10 @@ describe("对象型接口", function() {
 		// 与上面按id排序不同，这里按tm排序，无法使用partial paging机制，nextkey为传统页码。
 		generalAdd();
 
-		// 指定 _pagekey=0时，应返回total字段。
+		// 指定 pagekey=0时，应返回total字段。
 		var pagesz = 3;
-		var param = {_pagesz: pagesz, res: "id,ac", cond: "id<=" + id_, orderby: "tm DESC"};
-		var ret = callSvrSync("ApiLog.query", $.extend({}, param, {_pagekey:0}));
+		var param = {pagesz: pagesz, res: "id,ac", cond: "id<=" + id_, orderby: "tm DESC"};
+		var ret = callSvrSync("ApiLog.query", $.extend({}, param, {pagekey:0}));
 		expect(ret).toJDTable(["id", "ac"]);
 		expect(ret).toEqual(jasmine.objectContaining({h: ["id", "ac"], d: jasmine.any(Array), total: jasmine.any(Number)})); // 应有total字段
 
@@ -344,7 +344,7 @@ describe("对象型接口", function() {
 		if (ret.nextkey) {
 			// 取第二页, 由于不是按照id排序，不能使用parital paging机制，第二页就是nextkey=2
 			expect(ret.nextkey).toEqual(2);
-			ret2 = callSvrSync("ApiLog.query", $.extend({}, param, {_pagekey:ret.nextkey}));
+			ret2 = callSvrSync("ApiLog.query", $.extend({}, param, {pagekey:ret.nextkey}));
 			expect(ret2).toJDTable(["id", "ac"]);
 			expect(ret2).toJDObj(["!total"]); // 不含total字段
 			// 下一页与前一页一定不同，因而首记录id不同。
@@ -365,7 +365,7 @@ describe("对象型接口", function() {
 				retN = ret2;
 			}
 			else {
-				retN = callSvrSync("ApiLog.query", $.extend({}, param, {_pagekey: pageCnt}));
+				retN = callSvrSync("ApiLog.query", $.extend({}, param, {pagekey: pageCnt}));
 				expect(retN).toJDTable(["id", "ac"]);
 			}
 			expect(retN.d.length).toEqual(lastPageSz);
@@ -379,7 +379,7 @@ describe("对象型接口", function() {
 		var dt = new Date();
 		dt.setTime(dt - T_DAY*7); // 7天内按ac分组统计
 		// 设置了pagekey, 要求返回total字段
-		var ret = callSvrSync("ApiLog.query", {gres:"ac", res:"count(*) cnt, sum(id) fakeSum", cond: "tm>='" + formatDate(dt) + "' and ac IS NOT NULL", orderby: "cnt desc", _pagesz: pagesz, _pagekey: 0});
+		var ret = callSvrSync("ApiLog.query", {gres:"ac", res:"count(*) cnt, sum(id) fakeSum", cond: "tm>='" + formatDate(dt) + "' and ac IS NOT NULL", orderby: "cnt desc", pagesz: pagesz, pagekey: 0});
 		expect(ret).toJDTable(["ac", "cnt", "fakeSum"]);
 
 		// 检查total计算是否正确, 注意：需要支持count(distinct ac)
@@ -391,7 +391,7 @@ describe("对象型接口", function() {
 		var pagesz = 3;
 		var dt = new Date();
 		dt.setTime(dt - T_DAY*7); // 7天内按ac分组统计
-		var ret = callSvrSync("ApiLog.query", {gres:"ac 动作", res:"count(*) 总数, sum(id) 总和", cond: "tm>='" + formatDate(dt) + "'", orderby: "总数 desc", _pagesz: pagesz});
+		var ret = callSvrSync("ApiLog.query", {gres:"ac 动作", res:"count(*) 总数, sum(id) 总和", cond: "tm>='" + formatDate(dt) + "'", orderby: "总数 desc", pagesz: pagesz});
 		expect(ret).toJDTable(["动作", "总数", "总和"]);
 
 		var ret = callSvrSync("ApiLog.query", {gres:"ac \"动作\"", res:"count(*) \"总数\", sum(id) \"总和\"", cond: "tm>='" + formatDate(dt) + "'", orderby: "\"总数\" desc"});
@@ -401,7 +401,7 @@ describe("对象型接口", function() {
 		generalAdd();
 
 		var pagesz = 3;
-		var ret = callSvrSync("ApiLog.query", {_pagesz: pagesz, _fmt: "list"});
+		var ret = callSvrSync("ApiLog.query", {pagesz: pagesz, fmt: "list"});
 		expect(ret).toJDList(["id", "ac", "addr", "tm"]);
 		// 至少有一条
 		expect(ret.list.length).toBeGreaterThan(0);
@@ -417,7 +417,7 @@ describe("对象型接口", function() {
 
 	function testExport(fmt, sp)
 	{
-		var ret = callSvrSync("ApiLog.query", {_pagesz: 3, _fmt: fmt, res: "id,ac 接口名,addr 地址,tm 时间"}, $.noop, null, {nofilter:1});
+		var ret = callSvrSync("ApiLog.query", {pagesz: 3, fmt: fmt, res: "id,ac 接口名,addr 地址,tm 时间"}, $.noop, null, {nofilter:1});
 		var arr = ret.split("\n");
 		expect(arr.length >= 2).toEqual(true); // 至少2行，标题和首行
 
@@ -532,7 +532,7 @@ describe("UserApiLog", function() {
 		userLogin();
 		generalAdd();
 
-		var ret = callSvrSync("UserApiLog.query", {_pagesz:5, cond: "id<=" + id_});
+		var ret = callSvrSync("UserApiLog.query", {pagesz:5, cond: "id<=" + id_});
 		expect(ret).toJDTable(["id", "userName", "!last3LogAc", "!user", "!last3Log"]);
 		var arr = rs2Array(ret);
 		// 至少有一条
@@ -544,7 +544,7 @@ describe("UserApiLog", function() {
 		userLogin();
 		generalAdd();
 
-		var ret = callSvrSync("UserApiLog.query", {_pagesz:5, cond: "userId IS NOT NULL AND userId<>0 AND userName LIKE '%test%'"});
+		var ret = callSvrSync("UserApiLog.query", {pagesz:5, cond: "userId IS NOT NULL AND userId<>0 AND userName LIKE '%test%'"});
 		expect(ret).toJDTable(["id", "userName", "!last3LogAc", "!user", "!last3Log"]);
 		var arr = rs2Array(ret);
 		// 至少有一条
@@ -554,7 +554,7 @@ describe("UserApiLog", function() {
 		userLogin();
 		generalAdd();
 
-		var ret = callSvrSync("UserApiLog.query", {res: "id, last3LogAc", _pagesz:5, cond: "id<=" + id_});
+		var ret = callSvrSync("UserApiLog.query", {res: "id, last3LogAc", pagesz:5, cond: "id<=" + id_});
 		expect(ret).toJDTable(["id", "!userName", "*last3LogAc", "!user", "!last3Log"]);
 		var arr = rs2Array(ret);
 		// 至少有一条
@@ -572,7 +572,7 @@ describe("UserApiLog", function() {
 		userLogin();
 		generalAdd();
 
-		var ret = callSvrSync("UserApiLog.query", {res: "id, user, last3Log", _pagesz:5, cond: "id<=" + id_});
+		var ret = callSvrSync("UserApiLog.query", {res: "id, user, last3Log", pagesz:5, cond: "id<=" + id_});
 		expect(ret).toJDTable(["id", "!userName", "!last3LogAc", "user", "last3Log"]);
 		var arr = rs2Array(ret);
 		// 至少有一条
@@ -588,10 +588,10 @@ describe("UserApiLog", function() {
 		userLogin();
 		generalAdd();
 
-		var ret = callSvrSync("UserApiLog.listByAc", {ac: "UserApiLog.add", _pagesz:1});
+		var ret = callSvrSync("UserApiLog.listByAc", {ac: "UserApiLog.add", pagesz:1});
 		expect(ret).toJDList(["id", "userName", "!last3LogAc", "!user", "!last3Log"]);
 		var arr = ret.list;
-		// 至少有一条, 由于设置了_pagesz=1，刚好一条
+		// 至少有一条, 由于设置了pagesz=1，刚好一条
 		expect(arr.length == 1).toEqual(true);
 		expect(arr[0].id).toEqual(id_);
 		expect(arr[0].userName != null).toEqual(true);
