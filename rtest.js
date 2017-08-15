@@ -311,6 +311,21 @@ describe("对象型接口", function() {
 		// 只有一条
 		expect(ret.d.length).toEqual(1);
 	});
+	it("query操作-alias in res/gres", function () {
+		generalAdd();
+
+		// alias在res/gres,cond/gcond,orderby中的替换
+		var pagesz = 3;
+		var ret = callSvrSync("ApiLog.query", {
+			pagesz: pagesz,
+			res: "count(*) cnt",
+			cond: "action is not null",
+			gres: "ac action",
+			orderby: "cnt DESC",
+			gcond: "cnt>1"
+		});
+		expect(ret).toJDTable(["action", "cnt"]);
+	});
 	it("query操作-分页", function () {
 		// 按id排序，使用的是partial paging机制，nextkey为返回的最后一个id
 		generalAdd();
@@ -416,6 +431,14 @@ describe("对象型接口", function() {
 		var ret2 = callSvrSync("ApiLog.query", {res:"count(distinct ac) cnt", cond: "tm>='" + formatDate(dt) + "' and ac IS NOT NULL" });
 		expect(ret2).toJDTable(["cnt"]);
 		expect(ret.total).toEqual(ret2.d[0][0]);
+
+		// 测试gcond参数
+		var maxCnt = ret.d[0][1]; // ["ac","cnt",...]
+		var gcond = "cnt<" + maxCnt;
+		ret3 = callSvrSync("ApiLog.query", {gres:"ac", res:"count(*) cnt", cond: "tm>='" + formatDate(dt) + "' and ac IS NOT NULL", orderby: "cnt desc", gcond: gcond, pagesz: pagesz});
+		expect(ret3).toJDTable(["ac", "cnt"]);
+		if (ret3.d.length > 0)
+			expect(ret3.d[0][1]).toBeLessThan(maxCnt); // gcond过滤了cnt最大的那些
 	});
 	it("query操作-gres统计-中文", function () {
 		var pagesz = 3;
