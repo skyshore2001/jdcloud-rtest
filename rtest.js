@@ -325,6 +325,16 @@ describe("对象型接口", function() {
 			gcond: "cnt>1"
 		});
 		expect(ret).toJDTable(["action", "cnt"]);
+
+		ret = callSvrSync("ApiLog.query", {
+			pagesz: pagesz,
+			res: "count(*) 总数",
+			cond: "操作 is not null",
+			gres: "ac as 操作",
+			orderby: "总数 DESC",
+			gcond: "总数>1"
+		});
+		expect(ret).toJDTable(["操作", "总数"]);
 	});
 	it("query操作-分页", function () {
 		// 按id排序，使用的是partial paging机制，nextkey为返回的最后一个id
