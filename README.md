@@ -13,6 +13,29 @@
 - 如果第一个suite失败，则测试中止，忽略其它测试。
 - 运行过程中，可以手工点击"Stop"按钮停止测试。
 
+注意：使用chrome浏览器打开本地html文件进行测试时，会因接口调用跨域被禁止访问而失败。
+可以安装chrome扩展程序**ForceCORS**，在该扩展程序的配置中，导入以下配置设置跨域访问：
+(假设接口URL前缀为`http://localhost`)
+
+	[
+		{
+			"URL": "http://localhost/*",
+			"headers": [
+				{
+					"name": "Access-Control-Allow-Origin",
+					"value": "null"
+				},
+				{
+					"name": "Access-Control-Allow-Credentials",
+					"value": "true"
+				},
+				{
+					"name": "Access-Control-Allow-Headers",
+					"value": "Content-Type"
+				}
+			]
+		}
+	]
 
 ## 开发测试用例
 
