@@ -111,6 +111,9 @@ describe("param函数", function() {
 		var userObj = {id: 99, name: "jerry", perms: ["emp","mgr"]};
 		var ret = callSvrSync("fn", {f: "param", name: "perms"}, $.noop, {_json: userObj});
 		expect(ret).toEqual(userObj.perms);
+
+		var ret = callSvrSync("fn", {f: "param", name: "user"}, $.noop, {_json: {user:userObj} });
+		expect(ret).toEqual(userObj);
 	});
 });
 
@@ -658,5 +661,74 @@ describe("UserApiLog", function() {
 		expect(arr.length == 1).toEqual(true);
 		expect(arr[0].id).toEqual(id_);
 		expect(arr[0].userName != null).toEqual(true);
+	});
+});
+
+describe("Batch批处理", function() {
+	function checkBatchRet(ret, expArr) {
+		expect(ret.length).toEqual(expArr.length);
+		$.each(expArr, function (i, exp) {
+			$.each(exp, function (j, e) {
+				expect(e).toEqual(ret[i][j]);
+			});
+		});
+	}
+	it("基本", function () {
+		var ival = 99;
+		var sval = "jason smith";
+		var req = [
+			{ac: "fn", get: {f:"param", name: "id", id: ival}},
+			{ac: "fn", get: {f:"param", name: "str", coll: "P"}, post: {str: sval}}
+		];
+		var ret = callSvrSync("batch", $.noop, {_json: req});
+		checkBatchRet(ret, [
+			[0, ival],
+			[0, sval]
+		]);
+	});
+	it("部分失败及事务请求", function () {
+		var ival = 99;
+		var sval = "jason smith";
+		var req = [
+			{ac: "fn", get: {f: "execOne", sql: "INSERT INTO ApiLog (tm, addr) VALUES ('2017-1-1', 'test-addr')", getNewId: true}},
+			{ac: "fn", get: {f:"mparam", name: "id", id2: ival}},
+			{ac: "fn", get: {f:"param", name: "str", coll: "P"}, post: {str: sval}}
+		];
+
+		// 无事务
+		var ret = callSvrSync("batch", $.noop, {_json: req});
+		checkBatchRet(ret, [
+			[0, jasmine.any(Number)],
+			[E_PARAM],
+			[0, sval]
+		]);
+		var newId = ret[0][1];
+		ret = callSvrSync("fn", {f:"queryOne", sql:"SELECT id FROM ApiLog WHERE id=" + newId});
+		expect(ret).toEqual(newId);
+
+		// 有事务
+		ret = callSvrSync("batch", {useTrans: 1}, $.noop, {_json: req});
+		checkBatchRet(ret, [
+			[0, jasmine.any(Number)],
+			[E_PARAM],
+			[E_ABORT]
+		]);
+		newId = ret[0][1];
+		ret = callSvrSync("fn", {f:"queryOne", sql:"SELECT id FROM ApiLog WHERE id=" + newId});
+		expect(ret).toEqual(false);
+	});
+	it("上下文参数", function () {
+		var obj = {id: 99, fname: "cond", perms: ["emp","mgr"]};
+		var req = [
+			{ac:"fn", get:{f: "param", name: "obj"}, post:{ obj:obj } },
+			{ac:"fn", get:{f: "param", name: "fname", fname:"{$-1.fname}"}, ref: ["fname"] },
+			{ac:"fn", get:{f: "param", name: "{$2}", cond:"id={$1.id} and perm in ('{$1.perms[0]}', '{$1.perms[1]}')"}, ref: ["cond", "name"] }
+		];
+		var ret = callSvrSync("batch", $.noop, {_json: req});
+		checkBatchRet(ret, [
+			[0, obj],
+			[0, obj.fname],
+			[0, "id=99 and perm in ('emp', 'mgr')"]
+		]);
 	});
 });
