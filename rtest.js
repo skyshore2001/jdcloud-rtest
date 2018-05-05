@@ -329,7 +329,7 @@ describe("对象型接口", function() {
 		var ret = callSvrSync("ApiLog.query", {
 			pagesz: pagesz,
 			res: "count(*) cnt",
-			cond: "action is not null",
+			cond: "action is not null and id<1000",
 			gres: "ac action",
 			orderby: "cnt DESC",
 			gcond: "cnt>1"
@@ -339,7 +339,7 @@ describe("对象型接口", function() {
 		ret = callSvrSync("ApiLog.query", {
 			pagesz: pagesz,
 			res: "count(*) 总数",
-			cond: "操作 is not null",
+			cond: "操作 is not null and id<1000",
 			gres: "ac as 操作",
 			orderby: "总数 DESC",
 			gcond: "总数>1"
@@ -349,7 +349,7 @@ describe("对象型接口", function() {
 		ret = callSvrSync("ApiLog.query", {
 			pagesz: pagesz,
 			res: "ac 操作, count(*) 总数, id \"金额(元)\", id \"速度 m/s\"",
-			cond: "操作 is not null"
+			cond: "操作 is not null and id<1000"
 		});
 		expect(ret).toJDTable(["操作", "总数", "金额(元)", "速度 m/s"]);
 	});
