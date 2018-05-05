@@ -73,9 +73,16 @@ describe("param函数", function() {
 		var dt = new Date();
 		dt.setMilliseconds(0);
 
-		var ret = callSvrSync("fn", {f: "param", name: "testDt/dt", testDt: dt.toISOString()});
-		// 服务端返回日期格式为 '/Date(1488124800000)/'
+		var ret = callSvrSync("fn", {f: "param", name: "testTm/tm", testTm: dt.toISOString()});
+		// 服务端返回日期格式为 '1488124800'(php) 或 '/Date(1488124800000)/'(java)
 		ret = parseDate(ret);
+		expect(ret).toEqual(dt);
+
+		var ret = callSvrSync("fn", {f: "param", name: "testDt/dt", testDt: dt.toISOString()});
+		ret = parseDate(ret);
+		dt.setHours(0);
+		dt.setMinutes(0);
+		dt.setSeconds(0);
 		expect(ret).toEqual(dt);
 
 		var ret = callSvrSync("fn", {f: "param", name: "testDt/dt", testDt: 'bad-datetime'});
@@ -338,6 +345,13 @@ describe("对象型接口", function() {
 			gcond: "总数>1"
 		});
 		expect(ret).toJDTable(["操作", "总数"]);
+
+		ret = callSvrSync("ApiLog.query", {
+			pagesz: pagesz,
+			res: "ac 操作, count(*) 总数, id \"金额(元)\", id \"速度 m/s\"",
+			cond: "操作 is not null"
+		});
+		expect(ret).toJDTable(["操作", "总数", "金额(元)", "速度 m/s"]);
 	});
 	it("query操作-分页", function () {
 		// 按id排序，使用的是partial paging机制，nextkey为返回的最后一个id
