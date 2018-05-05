@@ -74,7 +74,7 @@ describe("param函数", function() {
 		dt.setMilliseconds(0);
 
 		var ret = callSvrSync("fn", {f: "param", name: "testTm/tm", testTm: dt.toISOString()});
-		// 服务端返回日期格式为 '1488124800'(php) 或 '/Date(1488124800000)/'(java)
+		// 服务端返回日期格式为 '1488124800'(php) 或 '2018-05-05 00:00:00'(java) 或 '/Date(1488124800000)/'(C#)
 		ret = parseDate(ret);
 		expect(ret).toEqual(dt);
 
