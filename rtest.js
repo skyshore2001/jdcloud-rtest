@@ -225,13 +225,15 @@ describe("对象型接口", function() {
 		userLogout();
 	});
 
-	function generalAdd(withRes)
+	function generalAdd(withRes, fields)
 	{
 		if (id_ != null && !withRes)
 			return;
 
 		var rd = Math.random();
 		postParam_ = {ac: "ApiLog.add", addr: "test-addr" + rd};
+		if (fields)
+			$.extend(postParam_, fields);
 		var param = {};
 		if (withRes) {
 			param.res = "id,addr,tm";
@@ -518,6 +520,20 @@ describe("对象型接口", function() {
 		testExport("excel", ",");
 	});
 
+	it("query操作-支持enum/enumList", function () {
+		generalAdd(false, {app:"mgr,boss", ver:"web"});
+
+		var ret = callSvrSync("ApiLog.query", {
+			res: "id 编号, ver 版本=a:安卓;ios:苹果IOS;wx:微信;web:PC浏览器, app 权限=emp:员工;mgr:经理;boss:老板",
+			cond: "id=" + id_,
+			orderby: "id DESC"
+		});
+		expect(ret).toJDTable(["编号", "版本", "权限"]);
+		expect(ret.d[0][1]).toEqual("PC浏览器");
+		expect(ret.d[0][2]).toEqual("经理,老板");
+	});
+
+	// del操作放最后，删除临时添加的数据
 	it("del操作", function () {
 		generalAdd();
 
