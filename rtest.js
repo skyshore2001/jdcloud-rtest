@@ -225,9 +225,11 @@ describe("对象型接口", function() {
 		userLogout();
 	});
 
+	// withRes?=false, fields?=null
+	// fields: 额外指定字段，如`{app:'aaa', ver:'web'}`
 	function generalAdd(withRes, fields)
 	{
-		if (id_ != null && !withRes)
+		if (id_ != null && !withRes && fields == null)
 			return;
 
 		var rd = Math.random();
@@ -240,9 +242,10 @@ describe("对象型接口", function() {
 		}
 		var ret = callSvrSync("ApiLog.add", param, $.noop, postParam_);
 
+		var id;
 		if (!withRes) {
 			expect(ret).toEqual(jasmine.any(Number));
-			id_ = ret;
+			id = ret;
 		}
 		else {
 			expect(ret).toEqual(jasmine.objectContaining({
@@ -253,8 +256,11 @@ describe("对象型接口", function() {
 			}));
 			// ac未在res中指定，不应包含
 			expect(ret).not.toJDObj(["ac"]);
-			id_ = ret.id;
+			id = ret.id;
 		}
+		if (fields == null)
+			id_ = id;
+		return id;
 	}
 
 	it("add操作", function () {
@@ -521,12 +527,11 @@ describe("对象型接口", function() {
 	});
 
 	it("query操作-支持enum/enumList", function () {
-		generalAdd(false, {app:"mgr,boss", ver:"web"});
+		var id = generalAdd(false, {app:"mgr,boss", ver:"web"});
 
 		var ret = callSvrSync("ApiLog.query", {
 			res: "id 编号, ver 版本=a:安卓;ios:苹果IOS;wx:微信;web:PC浏览器, app 权限=emp:员工;mgr:经理;boss:老板",
-			cond: "id=" + id_,
-			orderby: "id DESC"
+			cond: "id=" + id,
 		});
 		expect(ret).toJDTable(["编号", "版本", "权限"]);
 		expect(ret.d[0][1]).toEqual("PC浏览器");
