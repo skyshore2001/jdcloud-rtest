@@ -505,7 +505,7 @@ describe("对象型接口", function() {
 
 	function testExport(fmt, sp)
 	{
-		var ret = callSvrSync("ApiLog.query", {pagesz: 3, fmt: fmt, res: "id,ac 接口名,addr 地址,tm 时间"}, $.noop, null, {nofilter:1});
+		var ret = callSvrSync("ApiLog.query", {pagesz: 3, fmt: fmt, res: "id,ac 接口名,addr 地址,tm \"日期 时间\""}, $.noop, null, {nofilter:1});
 		var arr = ret.split("\n");
 		expect(arr.length >= 2).toEqual(true); // 至少2行，标题和首行
 
@@ -529,8 +529,9 @@ describe("对象型接口", function() {
 	it("query操作-支持enum/enumList", function () {
 		var id = generalAdd(false, {app:"mgr,boss", ver:"web"});
 
+		// 支持字段加引号
 		var ret = callSvrSync("ApiLog.query", {
-			res: "id 编号, ver 版本=a:安卓;ios:苹果IOS;wx:微信;web:PC浏览器, app 权限=emp:员工;mgr:经理;boss:老板",
+			res: "id 编号, ver 版本=a:安卓;ios:苹果IOS;wx:微信;web:PC浏览器, app \"权限\"=emp:员工;mgr:经理;boss:老板",
 			cond: "id=" + id,
 		});
 		expect(ret).toJDTable(["编号", "版本", "权限"]);
