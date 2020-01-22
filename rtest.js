@@ -47,9 +47,10 @@ describe("param函数", function() {
 		expect(ret).toEqual(str);
 	});
 
+	// v5.4后只对/<>/进行处理防止XSS。不处理常用的/&'"/这些符号
 	it("字符串型参数-防止XSS攻击", function () {
-		var str = "a&b";
-		var str2 = "a&amp;b";
+		var str = "a<b";
+		var str2 = "a&lt;b";
 		var ret = callSvrSync("fn", {f: "param", name: "str", coll: "P"}, $.noop, {str: str});
 		expect(ret).toEqual(str2);
 	});
