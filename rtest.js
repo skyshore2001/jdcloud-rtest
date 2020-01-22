@@ -503,9 +503,14 @@ describe("对象型接口", function() {
 		expect(ret.list[0].hasOwnProperty("ua")).toBeFalsy();
 	});
 
-	function testExport(fmt, sp)
+	// 匹配行列，或字符串匹配tag
+	function testExport(fmt, sp, tag)
 	{
 		var ret = callSvrSync("ApiLog.query", {pagesz: 3, fmt: fmt, res: "id,ac 接口名,addr 地址,tm \"日期 时间\""}, $.noop, null, {nofilter:1});
+		if (tag) {
+			expect(ret.substr(0, tag.length)).toEqual(tag);
+			return;
+		}
 		var arr = ret.split("\n");
 		expect(arr.length >= 2).toEqual(true); // 至少2行，标题和首行
 
@@ -522,8 +527,14 @@ describe("对象型接口", function() {
 	it("query操作-导出csv", function () {
 		testExport("csv", ",");
 	});
+	it("query操作-导出excelcsv", function () {
+		testExport("excelcsv", ",");
+	});
 	it("query操作-导出excel", function () {
-		testExport("excel", ",");
+		testExport("excel", null, "PK");
+	});
+	it("query操作-导出html", function () {
+		testExport("html", null, "<table");
 	});
 
 	it("query操作-支持enum/enumList", function () {
