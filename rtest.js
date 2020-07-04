@@ -391,7 +391,10 @@ describe("对象型接口", function() {
 
 		// 指定 pagekey=0时，应返回total字段。
 		var pagesz = 3;
-		var param = {pagesz: pagesz, res: "id,ac", cond: "id<=" + id_, orderby: "tm DESC"};
+		var tm = new Date();
+		tm.setMonth(tm.getMonth()-1);
+		var tmstr = tm.toLocaleDateString(); // 限制1个月内数据，避免太慢。
+		var param = {pagesz: pagesz, res: "id,ac", cond: "id<=" + id_ + " and tm>='" + tmstr + "'", orderby: "tm DESC"};
 		var ret = callSvrSync("ApiLog.query", $.extend({}, param, {pagekey:0}));
 		expect(ret).toJDTable(["id", "ac"]);
 		expect(ret).toEqual(jasmine.objectContaining({h: ["id", "ac"], d: jasmine.any(Array), total: jasmine.any(Number)})); // 应有total字段
