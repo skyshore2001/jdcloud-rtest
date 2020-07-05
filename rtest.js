@@ -665,6 +665,24 @@ describe("对象型接口", function() {
 		var ret = callSvrSync("ApiLog.get", {id: id_, res:"addr"});
 		expect(ret).toJDRet(E_PARAM);
 	});
+	it("get/query接口-enumFields", function () {
+		userLogin();
+
+		var ret = callSvrSync("UserA.query", {fmt:"one", res:"id,lastLogAc,lastLog", orderby:"id DESC"});
+		expect(ret).toJDObj(["id", "lastLogAc", "lastLog"]);
+		expect(ret.lastLogAc).toEqual(ret.lastLog.ac);
+		var user = ret;
+
+		var ret = callSvrSync("UserA.query", {fmt:"one", res:"id,lastLogAc", orderby:"id DESC"});
+		expect(ret).toJDObj(["id", "lastLogAc"]);
+		expect(ret.lastLogAc).toEqual(user.lastLogAc);
+	});
+	it("query接口-qsearch", function () {
+		userLogin();
+		var ret = callSvrSync("UserApiLog.query", {q: "login", fmt: "one"});
+		expect(ret).toJDObj(["id", "ac", "tm"]);
+		expect(ret.ac).toEqual("login");
+	});
 });
 
 describe("对象型接口-异常", function() {
