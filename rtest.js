@@ -489,7 +489,7 @@ describe("对象型接口", function() {
 		var ret = callSvrSync("ApiLog.query", {gres:"ac \"动作\"", res:"count(*) \"总数\", sum(id) \"总和\"", cond: "tm>='" + formatDate(dt) + "'", orderby: "\"总数\" desc"});
 		expect(ret).toJDTable(["动作", "总数", "总和"]);
 	});
-	it("query操作-list", function () {
+	it("query操作-fmt=list", function () {
 		generalAdd();
 
 		var pagesz = 3;
@@ -505,6 +505,28 @@ describe("对象型接口", function() {
 		}
 		// 不包含"ua"属性
 		expect(ret.list[0].hasOwnProperty("ua")).toBeFalsy();
+	});
+	it("query操作-fmt=one (v5.5)", function () {
+		generalAdd();
+
+		var pagesz = 3;
+		var ret = callSvrSync("ApiLog.query", {cond:"id=" + id_, fmt: "one"});
+		expect(ret).toJDObj(["id", "ac", "addr", "tm"]);
+
+		var ret = callSvrSync("ApiLog.query", {cond:"id=-1", fmt: "one"});
+		expect(ret).toJDRet(E_PARAM);
+
+		var ret = callSvrSync("ApiLog.query", {cond:"id=" + id_, fmt: "one?"});
+		expect(ret).toJDObj(["id", "ac", "addr", "tm"]);
+
+		var ret = callSvrSync("ApiLog.query", {cond:"id=" + id_, fmt: "one?", res:"id"});
+		expect(ret).toEqual(id_);
+
+		var ret = callSvrSync("ApiLog.query", {cond:"id=" + id_, fmt: "one?", res:"userId"});
+		expect(ret).toEqual(null);
+
+		var ret = callSvrSync("ApiLog.query", {cond:"id=-1", fmt: "one?", res:"id"});
+		expect(ret).toEqual(false);
 	});
 
 	// 匹配行列，或字符串匹配tag
@@ -562,6 +584,85 @@ describe("对象型接口", function() {
 		expect(ret).toEqual("OK");
 
 		var ret = callSvrSync("ApiLog.get", {id: id_});
+		expect(ret).toJDRet(E_PARAM);
+	});
+
+	it("query接口-外部字段与关联表 (v5.5)", function () {
+		userLogin();
+
+		var ret = callSvrSync("UserA.query", { pagesz:3 });
+		expect(ret).toJDTable(["id", "*logCnt", "*lastLog", "!lastLogId"]);
+		var arr = rs2Array(ret);
+		expect(arr[0].lastLog).toJDObj(["id", "tm", "ac"]);
+		var logId = arr[0].lastLog.id;
+		var userId = arr[0].id;
+
+		var ret = callSvrSync("UserApiLog.get", { id:logId, res:"user2" });
+		expect(ret).toJDObj(["!id", "user2"]);
+		expect(ret.user2).toJDObj(["id", "name"]);
+		expect(ret.user2.id).toEqual(userId);
+	});
+	it("query接口-subobj嵌套 (v5.5)", function () {
+		userLogin();
+
+		var rd = Math.random();
+		var log = [ {ac: "UserA.add-1", addr: "addr-1"},  {ac: "UserA.add-2", addr: "addr-2"} ];
+		var data = { name: 'rtest-user-' + rd, log: log };
+		var ret = callSvrSync("UserA.add", $.noop, data);
+		expect(ret).toJDRet(0);
+		var userId = ret;
+
+		var ret = callSvrSync("UserA.get", {id: userId, res:"log"});
+		expect(ret).toJDObj(["id", "log"]);
+		JDUtil.validateObjArray(ret.log, ["id", "ac", "tm"]);
+		expect($.isArray(ret.log) && ret.log.length == 2).toEqual(true);
+		var log1 = ret.log[0];
+		var log2 = ret.log[1];
+
+		// 用set接口操作子表：删除log1, 修改log2, 增加log3
+		var data = {log: [
+			{id: log1.id, _delete:1}, 
+			{id: log2.id, ac: 'UserA.add-2.1', addr:'addr-2.1'},
+			{ac: 'UserA.add-3', addr:'addr-3'}
+		]};
+		var ret = callSvrSync("UserA.set", {id: userId}, $.noop, data);
+		expect(ret).toJDRet(0);
+
+		// 验证set结果
+		var ret = callSvrSync("UserA.get", {id: userId, res:"log"});
+		expect(ret).toJDObj(["id", "log"]);
+		JDUtil.validateObjArray(ret.log, ["id", "ac", "tm"]);
+		expect($.isArray(ret.log) && ret.log.length == 2).toEqual(true);
+		expect(ret.log).toEqual([
+			{id: log2.id, ac: log2.ac, tm: log2.tm, addr:'addr-2.1'}, // ac是只读，不会被修改
+			{id: jasmine.any(Number), ac: 'UserA.add-3', tm: jasmine.any(String), addr:'addr-3'}
+		]);
+	});
+	it("query接口-pivot & hiddenFields(v5.5)", function () {
+		userLogin();
+
+		var y = new Date().getFullYear() + "";
+		var ret = callSvrSync("UserApiLog.query", {gres:"y", res:"COUNT(*) cnt", pivot:"y"});
+		expect(ret).toJDTable(["!cnt", y]);
+
+		var ret = callSvrSync("UserApiLog.query", {gres:"userId", res:"userName, COUNT(*) cnt", pivot:"userName", hiddenFields:"userId"});
+		var userName = 'jdcloud-test';
+		expect(ret).toJDTable(["!cnt", "!userId", userName]);
+	});
+	it("setIf & delIf接口", function () {
+		generalAdd();
+
+		var newVal = 'addr-setIf';
+		var ret = callSvrSync("ApiLog.setIf", {cond:"id=" + id_}, $.noop, {addr:newVal});
+		expect(ret).toEqual(1);
+
+		var ret = callSvrSync("ApiLog.get", {id: id_, res:"addr"});
+		expect(ret.addr).toEqual(newVal);
+
+		var ret = callSvrSync("ApiLog.delIf", {cond:"id=" + id_});
+		expect(ret).toEqual(1);
+
+		var ret = callSvrSync("ApiLog.get", {id: id_, res:"addr"});
 		expect(ret).toJDRet(E_PARAM);
 	});
 });
