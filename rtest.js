@@ -651,6 +651,15 @@ describe("对象型接口", function() {
 		var userName = 'jdcloud-test';
 		expect(ret).toJDTable(["!cnt", "!userId", userName]);
 	});
+	it("query接口- 外部字段require属性 & hiddenFields(v5.5)", function () {
+		var ret = callSvrSync("ApiLog.query", {res:"id, ac, ym", orderby: "id desc", fmt: "one"});
+		expect(ret).toJDObj(["id", "ac", "ym", "!y", "!m"]);
+		var log = ret;
+
+		// hiddenFields参数为0，应禁用自动隐藏字段
+		var ret = callSvrSync("ApiLog.get", {res:"id, ac, ym", id: log.id, hiddenFields:0});
+		expect(ret).toJDObj(["id", "ac", "ym", "y", "m"]);
+	});
 	it("setIf & delIf接口", function () {
 		var id = generalAdd(false, {});
 
@@ -676,7 +685,7 @@ describe("对象型接口", function() {
 		var user = ret;
 
 		var ret = callSvrSync("UserA.query", {fmt:"one", res:"id,lastLogAc", orderby:"id DESC"});
-		expect(ret).toJDObj(["id", "lastLogAc"]);
+		expect(ret).toJDObj(["id", "lastLogAc", "!lastLog"]); // lastLog是自动引入的，后端hiddenFields机制使该字段不返回
 		expect(ret.lastLogAc).toEqual(user.lastLogAc);
 	});
 	it("query接口-qsearch", function () {
@@ -685,10 +694,13 @@ describe("对象型接口", function() {
 		expect(ret).toJDObj(["id", "ac", "tm"]);
 		expect(ret.ac).toEqual("login");
 	});
-	/*
 	it("query接口-res中支持对虚拟字段的聚合函数", function () {
+		var ret = callSvrSync("ApiLog.query", {res:"COUNT(distinct userName) userCnt", fmt:"one?"})
+		expect(ret).toEqual(jasmine.any(Number));
+
+		var ret = callSvrSync("ApiLog.query", {res:"SUM(m+1) s", fmt:"one?"})
+		expect(ret).toEqual(jasmine.any(String));
 	});
-	*/
 });
 
 describe("对象型接口-异常", function() {
