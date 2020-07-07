@@ -226,12 +226,14 @@ describe("对象型接口", function() {
 		userLogout();
 	});
 
+	// 新加一个测试对象，返回其id，且将id保存在id_中（除非指定fields）。
 	// withRes?=false, fields?=null
-	// fields: 额外指定字段，如`{app:'aaa', ver:'web'}`
+	// fields: 额外指定字段，如`{app:'aaa', ver:'web'}`, 这时会新加一个对象，不影响id_值。
+	// 例如做删除操作时应新建一个对象（可设置fields为{}），避免影响其它用例。
 	function generalAdd(withRes, fields)
 	{
 		if (id_ != null && !withRes && fields == null)
-			return;
+			return id_;
 
 		var rd = Math.random();
 		postParam_ = {ac: "ApiLog.add", addr: "test-addr" + rd};
@@ -578,12 +580,12 @@ describe("对象型接口", function() {
 
 	// del操作放最后，删除临时添加的数据
 	it("del操作", function () {
-		generalAdd();
+		var id = generalAdd(false, {});
 
-		var ret = callSvrSync("ApiLog.del", {id: id_});
+		var ret = callSvrSync("ApiLog.del", {id: id});
 		expect(ret).toEqual("OK");
 
-		var ret = callSvrSync("ApiLog.get", {id: id_});
+		var ret = callSvrSync("ApiLog.get", {id: id});
 		expect(ret).toJDRet(E_PARAM);
 	});
 
@@ -650,19 +652,19 @@ describe("对象型接口", function() {
 		expect(ret).toJDTable(["!cnt", "!userId", userName]);
 	});
 	it("setIf & delIf接口", function () {
-		generalAdd();
+		var id = generalAdd(false, {});
 
 		var newVal = 'addr-setIf';
-		var ret = callSvrSync("ApiLog.setIf", {cond:"id=" + id_}, $.noop, {addr:newVal});
+		var ret = callSvrSync("ApiLog.setIf", {cond:"id=" + id}, $.noop, {addr:newVal});
 		expect(ret).toEqual(1);
 
-		var ret = callSvrSync("ApiLog.get", {id: id_, res:"addr"});
+		var ret = callSvrSync("ApiLog.get", {id: id, res:"addr"});
 		expect(ret.addr).toEqual(newVal);
 
-		var ret = callSvrSync("ApiLog.delIf", {cond:"id=" + id_});
+		var ret = callSvrSync("ApiLog.delIf", {cond:"id=" + id});
 		expect(ret).toEqual(1);
 
-		var ret = callSvrSync("ApiLog.get", {id: id_, res:"addr"});
+		var ret = callSvrSync("ApiLog.get", {id: id, res:"addr"});
 		expect(ret).toJDRet(E_PARAM);
 	});
 	it("get/query接口-enumFields", function () {
@@ -683,6 +685,10 @@ describe("对象型接口", function() {
 		expect(ret).toJDObj(["id", "ac", "tm"]);
 		expect(ret.ac).toEqual("login");
 	});
+	/*
+	it("query接口-res中支持对虚拟字段的聚合函数", function () {
+	});
+	*/
 });
 
 describe("对象型接口-异常", function() {
