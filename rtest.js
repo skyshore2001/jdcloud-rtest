@@ -641,13 +641,11 @@ describe("对象型接口", function() {
 		]);
 	});
 	it("query接口-pivot & hiddenFields(v5.5)", function () {
-		userLogin();
-
 		var y = new Date().getFullYear() + "";
-		var ret = callSvrSync("UserApiLog.query", {gres:"y", res:"COUNT(*) cnt", pivot:"y"});
+		var ret = callSvrSync("ApiLog.query", {gres:"y", res:"COUNT(*) cnt", pivot:"y"});
 		expect(ret).toJDTable(["!cnt", y]);
 
-		var ret = callSvrSync("UserApiLog.query", {gres:"userId", res:"userName, COUNT(*) cnt", pivot:"userName", hiddenFields:"userId"});
+		var ret = callSvrSync("ApiLog.query", {gres:"userId", res:"userName, COUNT(*) cnt", pivot:"userName", hiddenFields:"userId"});
 		var userName = 'jdcloud-test';
 		expect(ret).toJDTable(["!cnt", "!userId", userName]);
 	});
@@ -689,10 +687,9 @@ describe("对象型接口", function() {
 		expect(ret.lastLogAc).toEqual(user.lastLogAc);
 	});
 	it("query接口-qsearch", function () {
-		userLogin();
-		var ret = callSvrSync("UserApiLog.query", {q: "login", fmt: "one"});
+		var ret = callSvrSync("ApiLog.query", {q: "ApiLog.query", fmt: "one"});
 		expect(ret).toJDObj(["id", "ac", "tm"]);
-		expect(ret.ac).toEqual("login");
+		expect(ret.ac).toEqual("ApiLog.query");
 	});
 	it("query接口-res中支持对虚拟字段的聚合函数", function () {
 		var ret = callSvrSync("ApiLog.query", {res:"COUNT(distinct userName) userCnt", fmt:"one?"})
