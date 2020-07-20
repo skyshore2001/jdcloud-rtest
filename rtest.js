@@ -536,8 +536,12 @@ describe("对象型接口", function() {
 	{
 		var ret = callSvrSync("ApiLog.query", {pagesz: 3, fmt: fmt, res: "id,ac 接口名,addr 地址,tm \"日期 时间\""}, $.noop, null, {nofilter:1});
 		if (tag) {
-			expect(ret.substr(0, tag.length)).toEqual(tag);
-			return;
+			if (sp == null) {
+				expect(ret.substr(0, tag.length)).toEqual(tag);
+				return;
+			}
+			if (ret.substr(0, tag.length) == tag)
+				return;
 		}
 		var arr = ret.split("\n");
 		expect(arr.length >= 2).toEqual(true); // 至少2行，标题和首行
@@ -559,7 +563,8 @@ describe("对象型接口", function() {
 		testExport("excelcsv", ",");
 	});
 	it("query操作-导出excel", function () {
-		testExport("excel", null, "PK");
+		//testExport("excel", null, "PK");
+		testExport("excel", ",", "PK"); // 优先导出excel格式，也允许实现为与excelcsv格式相同。
 	});
 	it("query操作-导出html", function () {
 		testExport("html", null, "<table");
@@ -607,7 +612,7 @@ describe("对象型接口", function() {
 	it("query接口-subobj嵌套 (v5.5)", function () {
 		userLogin();
 
-		var rd = Math.random();
+		var rd = (Math.random() + "").substr(2, 5);
 		var log = [ {ac: "UserA.add-1", addr: "addr-1"},  {ac: "UserA.add-2", addr: "addr-2"} ];
 		var data = { name: 'rtest-user-' + rd, log: log };
 		var ret = callSvrSync("UserA.add", $.noop, data);
@@ -620,6 +625,14 @@ describe("对象型接口", function() {
 		expect($.isArray(ret.log) && ret.log.length == 2).toEqual(true);
 		var log1 = ret.log[0];
 		var log2 = ret.log[1];
+
+		// 测试res_{subobj}和param_{subobj}条件
+		var ret = callSvrSync("UserA.query", {cond: "id="+userId, res:"log", res_log: "id,ac", param_log: {cond: "id=" + log2.id} });
+		expect(ret).toJDTable(["id", "log"]);
+		var arr = rs2Array(ret);
+		JDUtil.validateObjArray(arr[0].log, ["id", "ac", "!tm"]);
+		expect($.isArray(arr[0].log) && arr[0].log.length == 1).toEqual(true);
+		expect(arr[0].log[0].id).toEqual(log2.id);
 
 		// 用set接口操作子表：删除log1, 修改log2, 增加log3
 		var data = {log: [
@@ -696,7 +709,9 @@ describe("对象型接口", function() {
 		expect(ret).toEqual(jasmine.any(Number));
 
 		var ret = callSvrSync("ApiLog.query", {res:"SUM(m+1) s", fmt:"one?"})
-		expect(ret).toEqual(jasmine.any(String));
+		// 注意：php中mysql小数字段（decimal类型）通过字符串返回。java中则按double返回。
+		var v = parseFloat(ret);
+		expect(v).toBeGreaterThan(0);
 	});
 });
 

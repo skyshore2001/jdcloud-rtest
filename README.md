@@ -13,6 +13,18 @@
 
 	--args --disable-web-security --user-data-dir --allow-file-access-from-files
 
+### 测试jdcloud-java项目
+
+在jdcloud-java项目下修改svc/WEB-INF/web.properties中设置
+
+	JDEnv=com.demo.rtest.WebApi
+
+在本项目rtest.html中修改URL:
+
+	var g_cfg = {
+		url: "http://localhost:8080/svc/api" // jdcloud-java
+	}
+
 ### 说明
 
 - DESIGN.md是测试用例相关的接口设计。
