@@ -8,8 +8,17 @@
 
 然后在rtest.html中修改g_cfg.url对应筋斗云后端服务基础地址，然后在浏览器中打开该文件即可测试。
 
-注意：使用chrome浏览器打开本地html文件进行测试时，可能会因接口调用跨域被禁止访问而失败。
-在jdcloud工程中，测试模式下服务器已设置了允许跨域。如果非设置模式，可设置chrome浏览器的启动模式以允许跨域，即添加命令行启动参数：
+注意：从本地文件访问服务，涉及跨域调用，而框架后台已默认允许跨域调用。
+
+在使用chrome 80版本以上浏览器进行测试时，可能会因cookie的SameSite策略导致跨站点时无法携带cookie, 进而发生登录后仍无效。
+
+在chrome 80版本后，可禁用SameSite策略：
+
+	谷歌浏览器地址栏输入：chrome://flags/
+	找到：SameSite by default cookies、Cookies without SameSite must be secure
+	设置上面这两项设置成 Disable
+
+若后台服务未开放跨域调用（以前的jdcloud工程中仅有测试模式下服务器才自动允许跨域），可设置chrome浏览器的启动模式以允许跨域，即添加命令行启动参数：
 
 	--args --disable-web-security --user-data-dir --allow-file-access-from-files
 
