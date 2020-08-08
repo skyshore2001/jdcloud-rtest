@@ -750,10 +750,14 @@ describe("对象型接口-异常", function() {
 	it("限制cond", function () {
 		var ret = callSvrSync("ApiLog.query", {cond: "userId in (SELECT id FROM User)"});
 		expect(ret).toJDRet(E_FORBIDDEN);
+
+		// 基于时间(BENCHMARK)的SQL注入攻击，取数据库名、登录用户名等。
+		var ret = callSvrSync("ApiLog.query", {cond: "cond=status AND 3535=IF((ORD(MID((DATABASE()),7,1))>114),BENCHMARK(4000000,MD5(0x6768654c)),3535)"});
+		expect(ret).toJDRet(E_FORBIDDEN);
 	});
 
 	it("限制res", function () {
-		var ret = callSvrSync("ApiLog.query", {res: "Max(id) maxId"});
+		var ret = callSvrSync("ApiLog.query", {res: "database() dbname"});
 		expect(ret).toJDRet(E_FORBIDDEN);
 	});
 });
